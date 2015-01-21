@@ -27,7 +27,11 @@ Each invocation creates a log file with all the generated output.
 ## Sources
 
 * zlib: http://zlib.net/
-* ncurses: http://www.gnu.org/software/ncurses/
+* ncurses: https://www.gnu.org/software/ncurses/
+* GNU MP: http://gmplib.org/
+* nettle: https://www.gnu.org/software/nettle/
+* libtasn1: https://www.gnu.org/software/libtasn1/
+* gnutls: http://www.gnutls.org/
 * samba: https://www.samba.org/
 
 ## Help support the apps

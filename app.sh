@@ -23,70 +23,105 @@ local URL="http://ftp.gnu.org/gnu/ncurses/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd target/"${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --datadir="${DEST}/share" --with-shared --enable-rpath
+./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --datadir="${DEST}/share" --with-shared --enable-rpath --with-termlib=tinfo
 make
 make install
 rm -v "${DEST}/lib"/*.a
 popd
 }
 
+### GMP ###
+_build_gmp() {
+local VERSION="6.0.0"
+local FOLDER="gmp-${VERSION}"
+local FILE="${FOLDER}a.tar.xz"
+local URL="https://gmplib.org/download/gmp/${FILE}"
+
+_download_xz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --disable-static
+make
+make install
+popd
+}
+
+### NETTLE ###
+_build_nettle() {
+local VERSION="2.7.1"
+local FOLDER="nettle-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="https://ftp.gnu.org/gnu/nettle/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --enable-public-key --disable-documentation
+make
+make install
+rm -vf "${DEST}/lib/libnettle.a"
+popd
+}
+
+### LIBTASN1 ###
+_build_libtasn1() {
+local VERSION="4.2"
+local FOLDER="libtasn1-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="http://ftp.gnu.org/gnu/libtasn1/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --disable-static
+make
+make install
+popd
+}
+
+### GNUTLS ###
+_build_gnutls() {
+local VERSION="3.3.9"
+local FOLDER="gnutls-${VERSION}"
+local FILE="${FOLDER}.tar.xz"
+local URL="ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/${FILE}"
+
+_download_xz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+PKG_CONFIG_PATH="${DEST}/lib/pkgconfig" ./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --disable-static --disable-cxx --with-libz-prefix="${DEPS}" --without-included-libtasn1 --enable-local-libopts --disable-padlock --disable-crywrap --disable-guile --disable-libdane --with-unbound-root-key-file="${DEST}/etc/unbound/root.key" --with-system-priority-file="${DEST}/etc/gnutls/default-priorities"
+make
+make install
+popd
+}
+
 ### SAMBA ###
 _build_samba() {
-#local VERSION="4.0.22"
 local VERSION="4.1.16"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="https://ftp.samba.org/pub/samba/stable/${FILE}"
 local PY=~/xtools/python2/${DROBO}
-
-# sudo apt-get install python-dev
+export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-
 CPP=${HOST}-cpp \
   LDFLAGS="${LDFLAGS} -L${PY}/lib-${DROBO}" \
   PYTHON="${PY}/bin/python2" \
   PYTHON_CONFIG="${PY}/bin/python2.7-config" \
   ./buildtools/bin/waf configure --jobs=8 --verbose --progress \
-  --cross-compile --cross-execute="qemu-arm-static -E LD_LIBRARY_PATH=${TOOLCHAIN}/${HOST}/libc/lib" --hostcc="gcc" \
+  --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
   --prefix="${DEST}" --mandir="${DEST}/man" --with-piddir="/tmp/DroboApps/samba" \
   --without-ads --without-ldap --disable-cups --disable-iprint --without-pam --without-pam_smbpass --without-systemd --nopyc --nopyo 
-
-#make
-#make install
-popd
-}
-
-### OPENSSL ###
-_build_openssl() {
-local OPENSSL_VERSION="1.0.1l"
-local OPENSSL_FOLDER="openssl-${OPENSSL_VERSION}"
-local OPENSSL_FILE="${OPENSSL_FOLDER}.tar.gz"
-local OPENSSL_URL="http://www.openssl.org/source/${OPENSSL_FILE}"
-
-_download_tgz "${OPENSSL_FILE}" "${OPENSSL_URL}" "${OPENSSL_FOLDER}"
-pushd target/"${OPENSSL_FOLDER}"
-./Configure --prefix="${DEPS}" \
-  --openssldir="${DEST}/etc/ssl" \
-  --with-zlib-include="${DEPS}/include" \
-  --with-zlib-lib="${DEPS}/lib" \
-  shared zlib-dynamic threads linux-armv4 -DL_ENDIAN ${CFLAGS} ${LDFLAGS}
-sed -i -e "s/-O3//g" Makefile
-make -j1
-make install_sw
-mkdir -p "${DEST}"/libexec
-cp -avR "${DEPS}/bin/openssl" "${DEST}/libexec/"
-cp -avR "${DEPS}/lib"/* "${DEST}/lib/"
-rm -vfr "${DEPS}/lib"
-rm -vf "${DEST}/lib"/*.a
-sed -i -e "s|^exec_prefix=.*|exec_prefix=${DEST}|g" "${DEST}"/lib/pkgconfig/openssl.pc
+make
+make install
 popd
 }
 
 _build() {
   _build_zlib
   _build_ncurses
+  _build_gmp
+  _build_nettle
+  _build_libtasn1
+  _build_gnutls
   _build_samba
   _package
 }
