@@ -82,6 +82,7 @@ local VERSION="3.3.9"
 local FOLDER="gnutls-${VERSION}"
 local FILE="${FOLDER}.tar.xz"
 local URL="ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/${FILE}"
+export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_xz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
@@ -93,25 +94,28 @@ popd
 
 ### SAMBA ###
 _build_samba() {
-local VERSION="4.1.16"
+local VERSION="4.2.2"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="https://ftp.samba.org/pub/samba/stable/${FILE}"
-local PY=~/xtools/python2/${DROBO}
+local PY="${HOME}/xtools/python2/${DROBO}"
 export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
 CPP=${HOST}-cpp \
   LDFLAGS="${LDFLAGS} -L${PY}/lib-${DROBO}" \
+  PKG_CONFIG_PATH="${DEST}/lib/pkgconfig" \
+  PERL="${HOME}/xtools/perl5/${DROBO}/bin/perl" \
+  PERL_PATH="/mnt/DroboFS/Shares/DroboApps/perl5/bin/perl" \
   PYTHON="${PY}/bin/python2" \
   PYTHON_CONFIG="${PY}/bin/python2.7-config" \
-  ./buildtools/bin/waf configure --jobs=8 --verbose --progress \
+  ./buildtools/bin/waf configure --jobs=4 --progress \
   --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
   --prefix="${DEST}" --mandir="${DEST}/man" --with-piddir="/tmp/DroboApps/samba" \
-  --without-ads --without-ldap --disable-cups --disable-iprint --without-pam --without-pam_smbpass --without-systemd --nopyc --nopyo 
-make
-make install
+  --without-ads --without-ldap --without-acl-support --disable-cups --disable-iprint --without-pam --without-pam_smbpass --without-systemd --nopyc --nopyo
+./buildtools/bin/waf build --jobs=4 --progress
+./buildtools/bin/waf install --jobs=4 --progress --prefix="${DEST}" --mandir="${DEST}/man"
 popd
 }
 
