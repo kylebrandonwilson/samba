@@ -1,3 +1,6 @@
+CFLAGS="${CFLAGS:-} -ffunction-sections -fdata-sections"
+LDFLAGS="${LDFLAGS:-} -L${DEPS}/lib -Wl,--gc-sections"
+
 ### ZLIB ###
 _build_zlib() {
 local VERSION="1.2.8"
@@ -6,11 +9,25 @@ local FILE="${FOLDER}.tar.gz"
 local URL="http://zlib.net/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
-pushd target/"${FOLDER}"
-./configure --prefix="${DEPS}" --libdir="${DEST}/lib"
+pushd "target/${FOLDER}"
+./configure --prefix="${DEPS}" --static
 make
 make install
-rm -v "${DEST}/lib"/*.a
+popd
+}
+
+### LIBPOPT ###
+_build_libpopt() {
+local VERSION="1.16"
+local FOLDER="popt-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="http://rpm5.org/files/popt/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
+make
+make install
 popd
 }
 
@@ -23,10 +40,39 @@ local URL="http://ftp.gnu.org/gnu/ncurses/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd target/"${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --datadir="${DEST}/share" --with-shared --enable-rpath --with-termlib=tinfo
+./configure --host="${HOST}" --prefix="${DEPS}" --datadir="${DEST}/share" --without-shared --enable-rpath --with-termlib=tinfo
 make
 make install
-rm -v "${DEST}/lib"/*.a
+popd
+}
+
+### LIBEDIT ###
+_build_libedit() {
+local VERSION="20150325-3.1"
+local FOLDER="libedit-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="http://thrysoee.dk/editline/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared ac_cv_lib_ncurses_tgetent=yes 
+make
+make install
+popd
+}
+
+### SQLITE ###
+_build_sqlite() {
+local VERSION="3081002"
+local FOLDER="sqlite-autoconf-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="http://sqlite.org/2015/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
+make
+make install
 popd
 }
 
@@ -39,7 +85,7 @@ local URL="https://gmplib.org/download/gmp/${FILE}"
 
 _download_xz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --disable-static
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
 make
 make install
 popd
@@ -47,6 +93,7 @@ popd
 
 ### NETTLE ###
 _build_nettle() {
+# Versions 3.0+ are not supported by gnutls 3.3.x.
 local VERSION="2.7.1"
 local FOLDER="nettle-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
@@ -54,23 +101,22 @@ local URL="https://ftp.gnu.org/gnu/nettle/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --enable-public-key --disable-documentation
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-public-key --disable-documentation --enable-static --disable-shared
 make
 make install
-rm -vf "${DEST}/lib/libnettle.a"
 popd
 }
 
 ### LIBTASN1 ###
 _build_libtasn1() {
-local VERSION="4.2"
+local VERSION="4.5"
 local FOLDER="libtasn1-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="http://ftp.gnu.org/gnu/libtasn1/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --disable-static
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
 make
 make install
 popd
@@ -78,6 +124,8 @@ popd
 
 ### GNUTLS ###
 _build_gnutls() {
+# Version 3.4.0 removes gnutls_certificate_type_set_priority(),
+# which is used by samba 4.2.2.
 local VERSION="3.3.9"
 local FOLDER="gnutls-${VERSION}"
 local FILE="${FOLDER}.tar.xz"
@@ -86,7 +134,44 @@ export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_xz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-PKG_CONFIG_PATH="${DEST}/lib/pkgconfig" ./configure --host="${HOST}" --prefix="${DEPS}" --libdir="${DEST}/lib" --disable-static --disable-cxx --with-libz-prefix="${DEPS}" --without-included-libtasn1 --enable-local-libopts --disable-padlock --disable-crywrap --disable-guile --disable-libdane --with-unbound-root-key-file="${DEST}/etc/unbound/root.key" --with-system-priority-file="${DEST}/etc/gnutls/default-priorities"
+PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared --disable-cxx --with-libz-prefix="${DEPS}" --without-included-libtasn1 --without-p11-kit --enable-local-libopts --disable-padlock --disable-crywrap --disable-guile --disable-libdane
+make
+make install
+popd
+}
+
+### HEIMDAL ###
+_build_heimdal() {
+# Version 1.5.2 changes some field names in kdc.h::krb5_kdc_configuration
+# See: http://upstream-tracker.org/compat_reports/heimdal/1.5.1_to_1.5.2/abi_compat_report.html
+local VERSION="1.5.1"
+local FOLDER="heimdal-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="http://www.h5l.org/dist/src/${FILE}"
+CPPFLAGS="${CPPFLAGS:-} -I${DEPS}/include/ncurses"
+export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+cp -vf "src/${FOLDER}-base64-rename.patch" "target/${FOLDER}/"
+pushd "target/${FOLDER}"
+patch -p1 -i "${FOLDER}-base64-rename.patch"
+rm -vfr lib/libedit
+./configure --host="${HOST}" --prefix="${DEPS}" --with-cross-tools="${DEPS}-native" --enable-static --disable-shared --enable-littleendian --disable-heimdal-documentation --with-libedit="${DEPS}" --with-sqlite3="${DEPS}" --without-openldap --without-x
+make
+make install
+popd
+}
+
+### LIBARCHIVE ###
+_build_libarchive() {
+local VERSION="3.1.2"
+local FOLDER="libarchive-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="http://www.libarchive.org/downloads/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared --without-bz2lib --without-lzmadec --without-lzma --without-lzo2 --without-openssl --without-xml2 --without-expat
 make
 make install
 popd
@@ -102,30 +187,45 @@ local PY="${HOME}/xtools/python2/${DROBO}"
 export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
+cp -vf "src/${FOLDER}-smbstatus-static-link.patch" "target/${FOLDER}/"
 pushd "target/${FOLDER}"
+patch -p0 -i "${FOLDER}-smbstatus-static-link.patch"
+# Fix static link problems
+sed -e "s/ndr_security.c/ndr_security.h/g" -i "source4/torture/rpc/fsrvp.c"
+sed -e "s/idmap_is_online/idmap_is_online2/g" \
+    -e "s/idmap_backends_unixid_to_sid/idmap_backends_unixid_to_sid2/g" \
+    -i "source3/torture/test_idmap_tdb_common.c"
+
 CPP=${HOST}-cpp \
-  LDFLAGS="${LDFLAGS} -L${PY}/lib-${DROBO}" \
-  PKG_CONFIG_PATH="${DEST}/lib/pkgconfig" \
+  LDFLAGS="${LDFLAGS} -L${PY}/lib-${DROBO} -larchive -lkrb5 -lhx509 -lgssapi -lheimntlm -lheimbase -lhcrypto -lasn1 -lwind -lcom_err -lroken -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lsqlite3 -lncurses -ledit -lpopt -lz -lresolv -lcrypt -ldl" \
+  PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" \
+  PATH="${DEPS}/bin:${PATH}" \
   PERL="${HOME}/xtools/perl5/${DROBO}/bin/perl" \
   PERL_PATH="/mnt/DroboFS/Shares/DroboApps/perl5/bin/perl" \
   PYTHON="${PY}/bin/python2" \
   PYTHON_CONFIG="${PY}/bin/python2.7-config" \
-  ./buildtools/bin/waf configure --jobs=4 --progress \
+  ./buildtools/bin/waf configure build install --jobs=4 --progress \
   --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
-  --prefix="${DEST}" --mandir="${DEST}/man" --with-piddir="/tmp/DroboApps/samba" \
-  --without-ads --without-ldap --without-acl-support --disable-cups --disable-iprint --without-pam --without-pam_smbpass --without-systemd --nopyc --nopyo
-./buildtools/bin/waf build --jobs=4 --progress
-./buildtools/bin/waf install --jobs=4 --progress --prefix="${DEST}" --mandir="${DEST}/man"
+  --prefix="${DEST}" --mandir="${DEST}/man" \
+  --without-ads --without-ldap --without-acl-support --disable-cups --disable-iprint --without-pam --without-pam_smbpass --without-winbind --without-systemd --nopyc --nopyo \
+  --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,NONE \
+  --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,NONE \
+  --nonshared-binary=ALL --with-static-modules=ALL
 popd
 }
 
 _build() {
   _build_zlib
+  _build_libpopt
   _build_ncurses
+  _build_libedit
+  _build_sqlite
   _build_gmp
   _build_nettle
   _build_libtasn1
   _build_gnutls
+  _build_heimdal
+  _build_libarchive
   _build_samba
   _package
 }
