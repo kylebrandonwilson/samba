@@ -1,18 +1,33 @@
+CPPFLAGS="${CPPFLAGS:-} -I${DEPS}/include/ncurses"
 CFLAGS="${CFLAGS:-} -ffunction-sections -fdata-sections"
-LDFLAGS="${LDFLAGS:-} -L${DEPS}/lib -Wl,--gc-sections"
+LDFLAGS="-L${DEST}/lib -L${DEPS}/lib -Wl,--gc-sections"
 
 ### ZLIB ###
 _build_zlib() {
-local VERSION="1.2.8"
+local VERSION="1.2.3"
 local FOLDER="zlib-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
-local URL="http://zlib.net/${FILE}"
+local URL="http://downloads.sourceforge.net/project/libpng/zlib/${VERSION}/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --prefix="${DEPS}" --static
+./configure --prefix="${DEPS}" --shared
 make
 make install
+popd
+}
+
+### LIBAIO ###
+_build_libaio() {
+local VERSION="0.3.110-1"
+local FOLDER="libaio-${VERSION}"
+local FILE="${FOLDER}.tar.gz"
+local URL="https://git.fedorahosted.org/cgit/libaio.git/snapshot/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+make prefix="${DEPS}" install
+rm -vf "${DEPS}/lib/libaio.so" "${DEPS}/lib/libaio.so.1" "${DEPS}/lib/libaio.so.1.0.1"
 popd
 }
 
@@ -40,7 +55,7 @@ local URL="http://ftp.gnu.org/gnu/ncurses/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd target/"${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --datadir="${DEST}/share" --without-shared --enable-rpath --with-termlib=tinfo
+./configure --host="${HOST}" --prefix="${DEPS}" --without-shared --with-termlib=tinfo
 make
 make install
 popd
@@ -71,71 +86,7 @@ local URL="http://sqlite.org/2015/${FILE}"
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
 ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
-make
-make install
-popd
-}
-
-### GMP ###
-_build_gmp() {
-local VERSION="6.0.0"
-local FOLDER="gmp-${VERSION}"
-local FILE="${FOLDER}a.tar.xz"
-local URL="https://gmplib.org/download/gmp/${FILE}"
-
-_download_xz "${FILE}" "${URL}" "${FOLDER}"
-pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
-make
-make install
-popd
-}
-
-### NETTLE ###
-_build_nettle() {
-# Versions 3.0+ are not supported by gnutls 3.3.x.
-local VERSION="2.7.1"
-local FOLDER="nettle-${VERSION}"
-local FILE="${FOLDER}.tar.gz"
-local URL="https://ftp.gnu.org/gnu/nettle/${FILE}"
-
-_download_tgz "${FILE}" "${URL}" "${FOLDER}"
-pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --enable-public-key --disable-documentation --enable-static --disable-shared
-make
-make install
-popd
-}
-
-### LIBTASN1 ###
-_build_libtasn1() {
-local VERSION="4.5"
-local FOLDER="libtasn1-${VERSION}"
-local FILE="${FOLDER}.tar.gz"
-local URL="http://ftp.gnu.org/gnu/libtasn1/${FILE}"
-
-_download_tgz "${FILE}" "${URL}" "${FOLDER}"
-pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
-make
-make install
-popd
-}
-
-### GNUTLS ###
-_build_gnutls() {
-# Version 3.4.0 removes gnutls_certificate_type_set_priority(),
-# which is used by samba 4.2.2.
-local VERSION="3.3.9"
-local FOLDER="gnutls-${VERSION}"
-local FILE="${FOLDER}.tar.xz"
-local URL="ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/${FILE}"
-export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
-
-_download_xz "${FILE}" "${URL}" "${FOLDER}"
-pushd "target/${FOLDER}"
-PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared --disable-cxx --with-libz-prefix="${DEPS}" --without-included-libtasn1 --without-p11-kit --enable-local-libopts --disable-padlock --disable-crywrap --disable-guile --disable-libdane
-make
+make -j1
 make install
 popd
 }
@@ -148,37 +99,103 @@ local VERSION="1.5.1"
 local FOLDER="heimdal-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="http://www.h5l.org/dist/src/${FILE}"
-CPPFLAGS="${CPPFLAGS:-} -I${DEPS}/include/ncurses"
-export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 cp -vf "src/${FOLDER}-base64-rename.patch" "target/${FOLDER}/"
 pushd "target/${FOLDER}"
 patch -p1 -i "${FOLDER}-base64-rename.patch"
 rm -vfr lib/libedit
-./configure --host="${HOST}" --prefix="${DEPS}" --with-cross-tools="${DEPS}-native" --enable-static --disable-shared --enable-littleendian --disable-heimdal-documentation --with-libedit="${DEPS}" --with-sqlite3="${DEPS}" --without-openldap --without-x
+
+export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
+./configure --host="${HOST}" --prefix="${DEPS}" --with-cross-tools="${DEPS}-native" --enable-static --disable-shared --enable-littleendian --disable-heimdal-documentation --with-libedit="${DEPS}" --with-sqlite="${DEPS}" --without-openldap --without-x
 make
 make install
 popd
 }
+
+### GMP ###
+# _build_gmp() {
+# local VERSION="6.0.0"
+# local FOLDER="gmp-${VERSION}"
+# local FILE="${FOLDER}a.tar.xz"
+# local URL="https://gmplib.org/download/gmp/${FILE}"
+# 
+# _download_xz "${FILE}" "${URL}" "${FOLDER}"
+# pushd "target/${FOLDER}"
+# ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
+# make
+# make install
+# popd
+# }
+
+### NETTLE ###
+# _build_nettle() {
+# # Versions 3.0+ are not supported by gnutls 3.3.x.
+# local VERSION="2.7.1"
+# local FOLDER="nettle-${VERSION}"
+# local FILE="${FOLDER}.tar.gz"
+# local URL="https://ftp.gnu.org/gnu/nettle/${FILE}"
+# 
+# _download_tgz "${FILE}" "${URL}" "${FOLDER}"
+# pushd "target/${FOLDER}"
+# ./configure --host="${HOST}" --prefix="${DEPS}" --enable-public-key --disable-documentation --enable-static --disable-shared
+# make
+# make install
+# popd
+# }
+
+### LIBTASN1 ###
+# _build_libtasn1() {
+# local VERSION="4.5"
+# local FOLDER="libtasn1-${VERSION}"
+# local FILE="${FOLDER}.tar.gz"
+# local URL="http://ftp.gnu.org/gnu/libtasn1/${FILE}"
+# 
+# _download_tgz "${FILE}" "${URL}" "${FOLDER}"
+# pushd "target/${FOLDER}"
+# ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
+# make
+# make install
+# popd
+# }
+
+### GNUTLS ###
+# _build_gnutls() {
+# # Version 3.4.0 removes gnutls_certificate_type_set_priority(),
+# # which is used by samba 4.2.2.
+# local VERSION="3.3.9"
+# local FOLDER="gnutls-${VERSION}"
+# local FILE="${FOLDER}.tar.xz"
+# local URL="ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/${FILE}"
+# export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
+# 
+# _download_xz "${FILE}" "${URL}" "${FOLDER}"
+# pushd "target/${FOLDER}"
+# PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared --disable-cxx --with-libz-prefix="${DEPS}" --without-included-libtasn1 --without-p11-kit --enable-local-libopts --disable-padlock --disable-crywrap --disable-guile --disable-libdane
+# make
+# make install
+# popd
+# }
 
 ### LIBARCHIVE ###
-_build_libarchive() {
-local VERSION="3.1.2"
-local FOLDER="libarchive-${VERSION}"
-local FILE="${FOLDER}.tar.gz"
-local URL="http://www.libarchive.org/downloads/${FILE}"
-
-_download_tgz "${FILE}" "${URL}" "${FOLDER}"
-pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared --without-bz2lib --without-lzmadec --without-lzma --without-lzo2 --without-openssl --without-xml2 --without-expat
-make
-make install
-popd
-}
+# _build_libarchive() {
+# local VERSION="3.1.2"
+# local FOLDER="libarchive-${VERSION}"
+# local FILE="${FOLDER}.tar.gz"
+# local URL="http://www.libarchive.org/downloads/${FILE}"
+# 
+# _download_tgz "${FILE}" "${URL}" "${FOLDER}"
+# pushd "target/${FOLDER}"
+# ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared --without-bz2lib --without-lzmadec --without-lzma --without-lzo2 --without-openssl --without-xml2 --without-expat
+# make
+# make install
+# popd
+# }
 
 ### SAMBA ###
 _build_samba() {
+# --with-ad-dc requires gnutls, which requires libtasn1, nettle, and gmp.
+# Also add these to LDFLAGS: -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lz
 local VERSION="4.2.2"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
@@ -196,36 +213,40 @@ sed -e "s/idmap_is_online/idmap_is_online2/g" \
     -e "s/idmap_backends_unixid_to_sid/idmap_backends_unixid_to_sid2/g" \
     -i "source3/torture/test_idmap_tdb_common.c"
 
-CPP=${HOST}-cpp \
-  LDFLAGS="${LDFLAGS} -L${PY}/lib-${DROBO} -larchive -lkrb5 -lhx509 -lgssapi -lheimntlm -lheimbase -lhcrypto -lasn1 -lwind -lcom_err -lroken -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lsqlite3 -lncurses -ledit -lpopt -lz -lresolv -lcrypt -ldl" \
+LDFLAGS="${LDFLAGS} -lheimntlm -lgssapi -lkrb5 -lheimbase -lhx509 -lhcrypto -lasn1 -lwind -lroken -lcom_err -lsqlite3 -ledit -lncurses -lpopt -lresolv -lcrypt -ldl"
+PATH="${DEPS}/bin:${PATH}" \
   PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" \
-  PATH="${DEPS}/bin:${PATH}" \
-  PERL="${HOME}/xtools/perl5/${DROBO}/bin/perl" \
-  PERL_PATH="/mnt/DroboFS/Shares/DroboApps/perl5/bin/perl" \
   PYTHON="${PY}/bin/python2" \
   PYTHON_CONFIG="${PY}/bin/python2.7-config" \
-  ./buildtools/bin/waf configure build install --jobs=4 --progress \
+  ./buildtools/bin/waf configure --jobs=4  --prefix="${DEST}" \
   --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
   --prefix="${DEST}" --mandir="${DEST}/man" \
-  --without-ads --without-ldap --without-acl-support --disable-cups --disable-iprint --without-pam --without-pam_smbpass --without-winbind --without-systemd --nopyc --nopyo \
-  --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,NONE \
-  --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,NONE \
-  --nonshared-binary=ALL --with-static-modules=ALL
+  --enable-pthreadpool --with-aio-support \
+  --disable-cups --disable-iprint \
+  --without-acl-support --without-ad-dc --without-ads --without-ldap --without-libarchive --without-pam --without-pam_smbpass --without-systemd --without-winbind \
+  --nopyc --nopyo \
+  --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
+  --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
+  --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_xattr \
+  --nonshared-binary=ALL
+./buildtools/bin/waf build install --jobs=4 --targets=smbd/smbd,nmbd/nmbd,smbpasswd
+"${STRIP}" -s -R .comment -R .note -R .note.ABI-tag "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" "${DEST}/bin/smbpasswd"
 popd
 }
 
 _build() {
   _build_zlib
+  _build_libaio
   _build_libpopt
   _build_ncurses
   _build_libedit
   _build_sqlite
-  _build_gmp
-  _build_nettle
-  _build_libtasn1
-  _build_gnutls
   _build_heimdal
-  _build_libarchive
+#  _build_gmp
+#  _build_nettle
+#  _build_libtasn1
+#  _build_gnutls
+#  _build_libarchive
   _build_samba
   _package
 }
