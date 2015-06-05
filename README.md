@@ -27,22 +27,18 @@ Each invocation creates a log file with all the generated output.
 ## Sources
 
 * zlib: http://zlib.net/
+* libaio: https://git.fedorahosted.org/cgit/libaio.git
+* libpopt: http://rpm5.org/files/popt/
 * ncurses: https://www.gnu.org/software/ncurses/
+* libedit: http://thrysoee.dk/editline/
+* sqlite: https://www.sqlite.org/
+* heimdal: http://www.h5l.org/
 * GNU MP: http://gmplib.org/
 * nettle: https://www.gnu.org/software/nettle/
 * libtasn1: https://www.gnu.org/software/libtasn1/
 * gnutls: http://www.gnutls.org/
+* libarchive: http://www.libarchive.org/
 * samba: https://www.samba.org/
-
-## Help support the apps
-
-If you like the repositories, or are using any of the apps from this site, please consider becoming a patreon or making a donation to support our efforts.
-
-[![Patreon](http://www.patreon.com/images/logo_emblem.png)](http://www.patreon.com/Droboports)
-
-[![Paypal](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KYFBRYLKSGNKA)
-
-[![Flattr](https://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/177640/DroboPorts)
 
 <sub>**Disclaimer**</sub>
 
