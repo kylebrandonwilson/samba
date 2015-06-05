@@ -229,8 +229,8 @@ PATH="${DEPS}/bin:${PATH}" \
   --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
   --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_xattr \
   --nonshared-binary=ALL
-./buildtools/bin/waf build install --jobs=4 --targets=smbd/smbd,nmbd/nmbd,smbpasswd
-"${STRIP}" -s -R .comment -R .note -R .note.ABI-tag "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" "${DEST}/bin/smbpasswd"
+./buildtools/bin/waf build install --jobs=4 --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit
+"${STRIP}" -s -R .comment -R .note -R .note.ABI-tag "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" "${DEST}/bin/smbpasswd" "${DEST}/bin/pdbedit"
 popd
 }
 
