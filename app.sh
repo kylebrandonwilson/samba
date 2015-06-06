@@ -218,9 +218,9 @@ PATH="${DEPS}/bin:${PATH}" \
   PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" \
   PYTHON="${PY}/bin/python2" \
   PYTHON_CONFIG="${PY}/bin/python2.7-config" \
-  ./buildtools/bin/waf configure --jobs=4  --prefix="${DEST}" \
+  DESTDIR="${DEST}" \
+  ./buildtools/bin/waf configure --jobs=4 --prefix="/" \
   --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
-  --prefix="${DEST}" --mandir="${DEST}/man" \
   --enable-pthreadpool --with-aio-support \
   --disable-cups --disable-iprint \
   --without-acl-support --without-ad-dc --without-ads --without-ldap --without-libarchive --without-pam --without-pam_smbpass --without-systemd --without-winbind \
@@ -229,7 +229,7 @@ PATH="${DEPS}/bin:${PATH}" \
   --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
   --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_xattr \
   --nonshared-binary=ALL
-./buildtools/bin/waf build install --jobs=4 --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit
+DESTDIR="${DEST}" ./buildtools/bin/waf build install --jobs=4 --prefix="/" --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit,smbtorture
 "${STRIP}" -s -R .comment -R .note -R .note.ABI-tag "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" "${DEST}/bin/smbpasswd" "${DEST}/bin/pdbedit"
 popd
 }
