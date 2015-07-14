@@ -1,0 +1,11 @@
+--- source3/wscript_build.orig	2015-05-29 11:46:56.830072586 -0700
++++ source3/wscript_build	2015-05-29 11:47:12.089880744 -0700
+@@ -1165,7 +1165,7 @@
+                  secrets3
+                  param''')
+ 
+-smbstatus_source = 'utils/status.c smbd/notify_internal.c'
++smbstatus_source = 'utils/status.c'
+ 
+ if bld.CONFIG_GET("WITH_PROFILE"):
+     smbstatus_source += ' utils/status_profile.c'

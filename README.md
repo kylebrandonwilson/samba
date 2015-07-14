@@ -32,6 +32,7 @@ Each invocation creates a log file with all the generated output.
 * ncurses: https://www.gnu.org/software/ncurses/
 * libedit: http://thrysoee.dk/editline/
 * sqlite: https://www.sqlite.org/
+* libattr: http://savannah.nongnu.org/projects/attr
 * heimdal: http://www.h5l.org/
 * GNU MP: http://gmplib.org/
 * nettle: https://www.gnu.org/software/nettle/

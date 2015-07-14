@@ -91,6 +91,22 @@ make install
 popd
 }
 
+### LIBATTR ###
+_build_libattr() {
+local VERSION="2.4.47"
+local FOLDER="attr-${VERSION}"
+local FILE="${FOLDER}.src.tar.gz"
+local URL="http://download.savannah.gnu.org/releases/attr/${FILE}"
+
+_download_tgz "${FILE}" "${URL}" "${FOLDER}"
+pushd "target/${FOLDER}"
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-shared --disable-static #--enable-static --disable-shared
+make
+make install install-dev install-lib
+chmod -v a+x "${DEPS}/lib/libattr.so.1.1.0"
+popd
+}
+
 ### HEIMDAL ###
 _build_heimdal() {
 # Version 1.5.2 changes some field names in kdc.h::krb5_kdc_configuration
@@ -107,7 +123,10 @@ patch -p1 -i "${FOLDER}-base64-rename.patch"
 rm -vfr lib/libedit
 
 export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
-./configure --host="${HOST}" --prefix="${DEPS}" --with-cross-tools="${DEPS}-native" --enable-static --disable-shared --enable-littleendian --disable-heimdal-documentation --with-libedit="${DEPS}" --with-sqlite="${DEPS}" --without-openldap --without-x
+./configure --host="${HOST}" --prefix="${DEPS}" --with-cross-tools="${DEPS}-native" --enable-static --disable-shared --enable-littleendian --disable-heimdal-documentation \
+  --with-libedit="${DEPS}" \
+  --with-sqlite="${DEPS}" --with-sqlite3-include="${DEPS}/include" --with-sqlite3-lib="${DEPS}/lib" \
+  --without-openldap --without-x
 make
 make install
 popd
@@ -196,7 +215,7 @@ popd
 _build_samba() {
 # --with-ad-dc requires gnutls, which requires libtasn1, nettle, and gmp.
 # Also add these to LDFLAGS: -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lz
-local VERSION="4.2.2"
+local VERSION="4.2.3"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="https://ftp.samba.org/pub/samba/stable/${FILE}"
@@ -227,11 +246,24 @@ PATH="${DEPS}/bin:${PATH}" \
   --nopyc --nopyo \
   --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
   --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
-  --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_xattr \
+  --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_depot,vfs_streams_xattr \
   --nonshared-binary=ALL
-DESTDIR="${DEST}" ./buildtools/bin/waf build install --jobs=4 --prefix="/" --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit,smbtorture
+DESTDIR="${DEST}" ./buildtools/bin/waf build install --jobs=4 --prefix="/" --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit,smbstatus,smbtorture
 "${STRIP}" -s -R .comment -R .note -R .note.ABI-tag "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" "${DEST}/bin/smbpasswd" "${DEST}/bin/pdbedit"
 popd
+}
+
+_build_rootfs() {
+# /sbin/smbd
+# /sbin/nmbd
+# /usr/bin/pdbedit
+# /usr/bin/smbpasswd
+# /lib/libattr.so
+# /lib/libattr.so.1
+# /lib/libattr.so.1.1.0
+# /bin/getfattr
+# /bin/setfattr
+  return 0
 }
 
 _build() {
@@ -241,6 +273,7 @@ _build() {
   _build_ncurses
   _build_libedit
   _build_sqlite
+  _build_libattr
   _build_heimdal
 #  _build_gmp
 #  _build_nettle
