@@ -234,6 +234,7 @@ sed -e "s/idmap_is_online/idmap_is_online2/g" \
 
 LDFLAGS="${LDFLAGS} -lheimntlm -lgssapi -lkrb5 -lheimbase -lhx509 -lhcrypto -lasn1 -lwind -lroken -lcom_err -lsqlite3 -ledit -lncurses -lpopt -lresolv -lcrypt -ldl"
 PATH="${DEPS}/bin:${PATH}" \
+  LD_LIBRARY_PATH="${PY}/lib" \
   PKG_CONFIG_PATH="${DEPS}/lib/pkgconfig" \
   PYTHON="${PY}/bin/python2" \
   PYTHON_CONFIG="${PY}/bin/python2.7-config" \
