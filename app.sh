@@ -78,7 +78,7 @@ popd
 
 ### SQLITE ###
 _build_sqlite() {
-local VERSION="3081002"
+local VERSION="3081101"
 local FOLDER="sqlite-autoconf-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="http://sqlite.org/2015/${FILE}"
@@ -86,7 +86,7 @@ local URL="http://sqlite.org/2015/${FILE}"
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
 ./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
-make -j1
+make
 make install
 popd
 }
