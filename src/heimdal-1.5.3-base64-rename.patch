@@ -1,0 +1,181 @@
+--- heimdal-1.5.1/lib/roken/base64.h.orig	2015-06-01 18:21:20.857990175 -0700
++++ heimdal-1.5.1/lib/roken/base64.h	2015-06-01 18:21:29.761878238 -0700
+@@ -47,7 +47,7 @@
+ #endif
+ 
+ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+-base64_encode(const void *, int, char **);
++base64_encode2(const void *, int, char **);
+ 
+ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+ base64_decode(const char *, void *);
+--- heimdal-1.5.1/appl/popper/pop_auth.c.orig	2015-06-01 18:09:04.971241524 -0700
++++ heimdal-1.5.1/appl/popper/pop_auth.c	2015-06-01 18:09:22.359022930 -0700
+@@ -110,7 +110,7 @@
+     status = (*m->loop)(p, state, input, input_length, &output, &output_length);
+     if(output_length > 0) {
+ 	char *s;
+-	base64_encode(output, output_length, &s);
++	base64_encode2(output, output_length, &s);
+ 	fprintf(p->output, "+ %s\r\n", s);
+ 	fflush(p->output);
+ 	free(output);
+--- heimdal-1.5.1/appl/ftp/ftpd/gssapi.c.orig	2015-06-01 18:10:06.350469883 -0700
++++ heimdal-1.5.1/appl/ftp/ftpd/gssapi.c	2015-06-01 18:10:30.546165702 -0700
+@@ -212,7 +212,7 @@
+ 	free(bindings);
+ 
+     if(output_token.length) {
+-	if(base64_encode(output_token.value, output_token.length, &p) < 0) {
++	if(base64_encode2(output_token.value, output_token.length, &p) < 0) {
+ 	    reply(535, "Out of memory base64-encoding.");
+ 	    return -1;
+ 	}
+@@ -420,7 +420,7 @@
+ 	    input.length = 0;
+ 	}
+ 	if (output_token.length != 0) {
+-	    base64_encode(output_token.value, output_token.length, &p);
++	    base64_encode2(output_token.value, output_token.length, &p);
+ 	    gss_release_buffer(&min_stat, &output_token);
+ 	    n = command("ADAT %s", p);
+ 	    free(p);
+--- heimdal-1.5.1/appl/ftp/ftpd/security.c.orig	2015-06-01 18:11:10.797659672 -0700
++++ heimdal-1.5.1/appl/ftp/ftpd/security.c	2015-06-01 18:11:24.649485531 -0700
+@@ -386,7 +386,7 @@
+ 	printf("Failed to encode command.\n");
+ 	return -1;
+     }
+-    if(base64_encode(enc, len, &buf) < 0){
++    if(base64_encode2(enc, len, &buf) < 0){
+ 	free(enc);
+ 	printf("Out of memory base64-encoding.\n");
+ 	return -1;
+--- heimdal-1.5.1/appl/ftp/ftp/gssapi.c.orig	2015-06-01 18:11:56.309087516 -0700
++++ heimdal-1.5.1/appl/ftp/ftp/gssapi.c	2015-06-01 18:12:20.992777200 -0700
+@@ -212,7 +212,7 @@
+ 	free(bindings);
+ 
+     if(output_token.length) {
+-	if(base64_encode(output_token.value, output_token.length, &p) < 0) {
++	if(base64_encode2(output_token.value, output_token.length, &p) < 0) {
+ 	    reply(535, "Out of memory base64-encoding.");
+ 	    return -1;
+ 	}
+@@ -420,7 +420,7 @@
+ 	    input.length = 0;
+ 	}
+ 	if (output_token.length != 0) {
+-	    base64_encode(output_token.value, output_token.length, &p);
++	    base64_encode2(output_token.value, output_token.length, &p);
+ 	    gss_release_buffer(&min_stat, &output_token);
+ 	    n = command("ADAT %s", p);
+ 	    free(p);
+--- heimdal-1.5.1/appl/ftp/ftp/security.c.orig	2015-06-01 18:13:04.268233154 -0700
++++ heimdal-1.5.1/appl/ftp/ftp/security.c	2015-06-01 18:13:19.104046642 -0700
+@@ -386,7 +386,7 @@
+ 	printf("Failed to encode command.\n");
+ 	return -1;
+     }
+-    if(base64_encode(enc, len, &buf) < 0){
++    if(base64_encode2(enc, len, &buf) < 0){
+ 	free(enc);
+ 	printf("Out of memory base64-encoding.\n");
+ 	return -1;
+--- heimdal-1.5.1/appl/test/http_client.c.orig	2015-06-01 18:14:10.291403130 -0700
++++ heimdal-1.5.1/appl/test/http_client.c	2015-06-01 18:14:21.863257652 -0700
+@@ -471,7 +471,7 @@
+ 		if (output_token.length) {
+ 		    char *neg_token;
+ 
+-		    base64_encode(output_token.value,
++		    base64_encode2(output_token.value,
+ 				  output_token.length,
+ 				  &neg_token);
+ 
+--- heimdal-1.5.1/kuser/kdigest.c.orig	2015-06-01 18:15:04.170725775 -0700
++++ heimdal-1.5.1/kuser/kdigest.c	2015-06-01 18:15:19.290535693 -0700
+@@ -485,7 +485,7 @@
+      *
+      */
+ 
+-    base64_encode(data.data, data.length, &s);
++    base64_encode2(data.data, data.length, &s);
+     free(data.data);
+     printf("type2=%s\n", s);
+     free(s);
+@@ -498,7 +498,7 @@
+     if (ret)
+ 	krb5_err(context, 1, ret, "krb5_ntlm_init_get_opaque");
+ 
+-    base64_encode(opaque.data, opaque.length, &s);
++    base64_encode2(opaque.data, opaque.length, &s);
+     krb5_data_free(&opaque);
+     printf("opaque=%s\n", s);
+     free(s);
+--- heimdal-1.5.1/lib/krb5/send_to_kdc.c.orig	2015-06-01 18:16:03.549979277 -0700
++++ heimdal-1.5.1/lib/krb5/send_to_kdc.c	2015-06-01 18:16:14.517841392 -0700
+@@ -186,7 +186,7 @@
+     char *request = NULL;
+     char *str;
+     int ret;
+-    int len = base64_encode(req->data, req->length, &str);
++    int len = base64_encode2(req->data, req->length, &str);
+ 
+     if(len < 0)
+ 	return -1;
+--- heimdal-1.5.1/lib/kadm5/ad.c.orig	2015-06-01 18:16:56.217317159 -0700
++++ heimdal-1.5.1/lib/kadm5/ad.c	2015-06-01 18:17:05.921195165 -0700
+@@ -1248,7 +1248,7 @@
+     {
+ 	char p[64];
+ 	krb5_generate_random_block(p, sizeof(p));
+-	plen = base64_encode(p, sizeof(p), &password);
++	plen = base64_encode2(p, sizeof(p), &password);
+ 	if (plen < 0)
+ 	    return ENOMEM;
+     }
+--- heimdal-1.5.1/lib/hdb/test_hdbkeys.c.orig	2015-06-01 18:17:30.776882686 -0700
++++ heimdal-1.5.1/lib/hdb/test_hdbkeys.c	2015-06-01 18:17:52.472609934 -0700
+@@ -108,7 +108,7 @@
+ 
+     krb5_free_context(context);
+ 
+-    ret = base64_encode(data, length, &str);
++    ret = base64_encode2(data, length, &str);
+     if (ret < 0)
+ 	errx(1, "base64_encode");
+ 
+--- heimdal-1.5.1/lib/roken/base64.c.orig	2015-06-01 18:18:18.324284934 -0700
++++ heimdal-1.5.1/lib/roken/base64.c	2015-06-01 18:18:59.527766937 -0700
+@@ -52,7 +52,7 @@
+ }
+ 
+ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+-base64_encode(const void *data, int size, char **str)
++base64_encode2(const void *data, int size, char **str)
+ {
+     char *s, *p;
+     int i;
+--- heimdal-1.5.1/lib/roken/base64-test.c.orig	2015-06-01 18:20:35.106565348 -0700
++++ heimdal-1.5.1/lib/roken/base64-test.c	2015-06-01 18:20:44.162451500 -0700
+@@ -58,7 +58,7 @@
+     for(t = tests; t->data; t++) {
+ 	char *str;
+ 	int len;
+-	len = base64_encode(t->data, t->len, &str);
++	len = base64_encode2(t->data, t->len, &str);
+ 	if(strcmp(str, t->result) != 0) {
+ 	    fprintf(stderr, "failed test %d: %s != %s\n", numtest,
+ 		    str, t->result);
+--- heimdal-1.5.1/lib/hx509/file.c.orig	2015-06-01 18:22:08.197395038 -0700
++++ heimdal-1.5.1/lib/hx509/file.c	2015-06-01 18:22:23.201206415 -0700
+@@ -98,7 +98,7 @@
+ 	if (length > ENCODE_LINE_LENGTH)
+ 	    length = ENCODE_LINE_LENGTH;
+ 
+-	l = base64_encode(p, length, &line);
++	l = base64_encode2(p, length, &line);
+ 	if (l < 0) {
+ 	    hx509_set_error_string(context, 0, ENOMEM,
+ 				   "malloc - out of memory");

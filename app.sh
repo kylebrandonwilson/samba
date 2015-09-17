@@ -215,7 +215,7 @@ popd
 _build_samba() {
 # --with-ad-dc requires gnutls, which requires libtasn1, nettle, and gmp.
 # Also add these to LDFLAGS: -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lz
-local VERSION="4.2.3"
+local VERSION="4.2.4"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="https://ftp.samba.org/pub/samba/stable/${FILE}"
@@ -224,8 +224,10 @@ export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 cp -vf "src/${FOLDER}-smbstatus-static-link.patch" "target/${FOLDER}/"
+cp -vf "src/0001-s3-smbd-Fix-opening-creating-stream-files-on-the-roo.patch" "target/${FOLDER}/"
 pushd "target/${FOLDER}"
 patch -p0 -i "${FOLDER}-smbstatus-static-link.patch"
+patch -p1 -i "0001-s3-smbd-Fix-opening-creating-stream-files-on-the-roo.patch"
 # Fix static link problems
 sed -e "s/ndr_security.c/ndr_security.h/g" -i "source4/torture/rpc/fsrvp.c"
 sed -e "s/idmap_is_online/idmap_is_online2/g" \
