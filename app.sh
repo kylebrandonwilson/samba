@@ -245,14 +245,19 @@ PATH="${DEPS}/bin:${PATH}" \
   --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
   --enable-pthreadpool --with-aio-support \
   --disable-cups --disable-iprint \
-  --without-acl-support --without-ad-dc --without-ads --without-ldap --without-libarchive --without-pam --without-pam_smbpass --without-systemd --without-winbind \
+  --without-acl-support --without-ad-dc --without-ads --without-ldap \
+  --without-libarchive --without-pam --without-pam_smbpass \
+  --without-systemd --without-winbind \
   --nopyc --nopyo \
   --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
   --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
   --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_depot,vfs_streams_xattr \
   --nonshared-binary=ALL
-DESTDIR="${DEST}" ./buildtools/bin/waf build install --jobs=4 --prefix="/" --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit,smbstatus,smbtorture
-"${STRIP}" -s -R .comment -R .note -R .note.ABI-tag "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" "${DEST}/bin/smbpasswd" "${DEST}/bin/pdbedit"
+DESTDIR="${DEST}" ./buildtools/bin/waf build install --jobs=4 --prefix="/" \
+  --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit,smbstatus,smbtorture,client/smbclient,nmblookup
+"${STRIP}" -s -R .comment -R .note -R .note.ABI-tag \
+  "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" \
+  "${DEST}/bin/smbpasswd" "${DEST}/bin/pdbedit" "${DEST}/bin/smbclient" "${DEST}/bin/nmblookup"
 popd
 }
 
