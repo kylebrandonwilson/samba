@@ -4,16 +4,17 @@ LDFLAGS="-L${DEST}/lib -L${DEPS}/lib -Wl,--gc-sections"
 
 ### ZLIB ###
 _build_zlib() {
-local VERSION="1.2.3"
+local VERSION="1.2.8"
 local FOLDER="zlib-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
-local URL="http://downloads.sourceforge.net/project/libpng/zlib/${VERSION}/${FILE}"
+local URL="http://zlib.net/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --prefix="${DEPS}" --shared
+./configure --prefix="${DEPS}"
 make
 make install
+rm -vf "${DEPS}/lib/libz.so"*
 popd
 }
 
@@ -70,7 +71,7 @@ local URL="http://thrysoee.dk/editline/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared ac_cv_lib_ncurses_tgetent=yes 
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared ac_cv_lib_ncurses_tgetent=yes
 make
 make install
 popd
@@ -78,7 +79,7 @@ popd
 
 ### SQLITE ###
 _build_sqlite() {
-local VERSION="3081101"
+local VERSION="3090200"
 local FOLDER="sqlite-autoconf-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="http://sqlite.org/2015/${FILE}"
@@ -215,7 +216,7 @@ popd
 _build_samba() {
 # --with-ad-dc requires gnutls, which requires libtasn1, nettle, and gmp.
 # Also add these to LDFLAGS: -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lz
-local VERSION="4.2.4"
+local VERSION="4.2.5"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="https://ftp.samba.org/pub/samba/stable/${FILE}"
@@ -224,10 +225,10 @@ export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 cp -vf "src/${FOLDER}-smbstatus-static-link.patch" "target/${FOLDER}/"
-cp -vf "src/0001-s3-smbd-Fix-opening-creating-stream-files-on-the-roo.patch" "target/${FOLDER}/"
+cp -vf "src/samba-bug-11466-attach-11499.patch" "target/${FOLDER}/"
 pushd "target/${FOLDER}"
 patch -p0 -i "${FOLDER}-smbstatus-static-link.patch"
-patch -p1 -i "0001-s3-smbd-Fix-opening-creating-stream-files-on-the-roo.patch"
+patch -p1 -i "samba-bug-11466-attach-11499.patch"
 # Fix static link problems
 sed -e "s/ndr_security.c/ndr_security.h/g" -i "source4/torture/rpc/fsrvp.c"
 sed -e "s/idmap_is_online/idmap_is_online2/g" \
