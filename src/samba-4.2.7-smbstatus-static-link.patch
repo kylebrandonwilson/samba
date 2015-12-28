@@ -1,0 +1,43 @@
+diff -ru a/source3/torture/test_idmap_tdb_common.c b/source3/torture/test_idmap_tdb_common.c
+--- a/source3/torture/test_idmap_tdb_common.c	2014-10-01 01:12:21.000000000 -0700
++++ b/source3/torture/test_idmap_tdb_common.c	2015-12-18 05:35:27.671747446 -0800
+@@ -57,12 +57,12 @@
+ 	return false;
+ }
+ 
+-bool idmap_is_online(void)
++bool idmap_is_online2(void)
+ {
+ 	return true;
+ }
+ 
+-NTSTATUS idmap_backends_unixid_to_sid(const char *domname, struct id_map *id)
++NTSTATUS idmap_backends_unixid_to_sid2(const char *domname, struct id_map *id)
+ {
+ 	return NT_STATUS_OK;
+ }
+diff -ru a/source3/wscript_build b/source3/wscript_build
+--- a/source3/wscript_build	2015-07-14 03:54:24.000000000 -0700
++++ b/source3/wscript_build	2015-12-18 05:35:14.363914823 -0800
+@@ -1166,7 +1166,7 @@
+                  secrets3
+                  param''')
+ 
+-smbstatus_source = 'utils/status.c smbd/notify_internal.c'
++smbstatus_source = 'utils/status.c'
+ 
+ if bld.CONFIG_GET("WITH_PROFILE"):
+     smbstatus_source += ' utils/status_profile.c'
+Only in b/source3: wscript_build.orig
+diff -ru a/source4/torture/rpc/fsrvp.c b/source4/torture/rpc/fsrvp.c
+--- a/source4/torture/rpc/fsrvp.c	2014-10-01 01:12:22.000000000 -0700
++++ b/source4/torture/rpc/fsrvp.c	2015-12-18 05:35:27.419752832 -0800
+@@ -41,7 +41,7 @@
+ #include "torture/torture.h"
+ #include "torture/smb2/proto.h"
+ #include "torture/rpc/torture_rpc.h"
+-#include "librpc/gen_ndr/ndr_security.c"
++#include "librpc/gen_ndr/ndr_security.h"
+ #include "librpc/gen_ndr/ndr_srvsvc_c.h"
+ #include "librpc/gen_ndr/ndr_fsrvp_c.h"
+ 

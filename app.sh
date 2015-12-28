@@ -216,7 +216,7 @@ popd
 _build_samba() {
 # --with-ad-dc requires gnutls, which requires libtasn1, nettle, and gmp.
 # Also add these to LDFLAGS: -lgnutls -ltasn1 -lnettle -lhogweed -lgmp -lz
-local VERSION="4.2.5"
+local VERSION="4.2.7"
 local FOLDER="samba-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="https://ftp.samba.org/pub/samba/stable/${FILE}"
@@ -224,16 +224,14 @@ local PY="${HOME}/xtools/python2/${DROBO}"
 export QEMU_LD_PREFIX="${TOOLCHAIN}/${HOST}/libc"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
+
 cp -vf "src/${FOLDER}-smbstatus-static-link.patch" "target/${FOLDER}/"
-cp -vf "src/samba-bug-11466-attach-11499.patch" "target/${FOLDER}/"
+cp -vf "src/${FOLDER}-bug-11466-attach-11499.patch" "target/${FOLDER}/"
+cp -vf "src/${FOLDER}-bug-11347.patch" "target/${FOLDER}/"
 pushd "target/${FOLDER}"
-patch -p0 -i "${FOLDER}-smbstatus-static-link.patch"
-patch -p1 -i "samba-bug-11466-attach-11499.patch"
-# Fix static link problems
-sed -e "s/ndr_security.c/ndr_security.h/g" -i "source4/torture/rpc/fsrvp.c"
-sed -e "s/idmap_is_online/idmap_is_online2/g" \
-    -e "s/idmap_backends_unixid_to_sid/idmap_backends_unixid_to_sid2/g" \
-    -i "source3/torture/test_idmap_tdb_common.c"
+patch -p1 -i "${FOLDER}-smbstatus-static-link.patch"
+patch -p1 -i "${FOLDER}-bug-11466-attach-11499.patch"
+patch -p1 -i "${FOLDER}-bug-11347.patch"
 
 LDFLAGS="${LDFLAGS} -lheimntlm -lgssapi -lkrb5 -lheimbase -lhx509 -lhcrypto -lasn1 -lwind -lroken -lcom_err -lsqlite3 -ledit -lncurses -lpopt -lresolv -lcrypt -ldl"
 PATH="${DEPS}/bin:${PATH}" \
