@@ -79,10 +79,10 @@ popd
 
 ### SQLITE ###
 _build_sqlite() {
-local VERSION="3090200"
+local VERSION="3100200"
 local FOLDER="sqlite-autoconf-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
-local URL="http://sqlite.org/2015/${FILE}"
+local URL="http://sqlite.org/$(date +%Y)/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
@@ -101,10 +101,11 @@ local URL="http://download.savannah.gnu.org/releases/attr/${FILE}"
 
 _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 pushd "target/${FOLDER}"
-./configure --host="${HOST}" --prefix="${DEPS}" --enable-shared --disable-static #--enable-static --disable-shared
+./configure --host="${HOST}" --prefix="${DEPS}" --enable-static --disable-shared
 make
 make install install-dev install-lib
-chmod -v a+x "${DEPS}/lib/libattr.so.1.1.0"
+# make install-lib does not install the static lib
+cp -vf libattr/.libs/libattr.a "${DEPS}/lib/"
 popd
 }
 
@@ -228,10 +229,14 @@ _download_tgz "${FILE}" "${URL}" "${FOLDER}"
 cp -vf "src/${FOLDER}-smbstatus-static-link.patch" "target/${FOLDER}/"
 cp -vf "src/${FOLDER}-bug-11466-attach-11499.patch" "target/${FOLDER}/"
 cp -vf "src/${FOLDER}-bug-11347.patch" "target/${FOLDER}/"
+cp -vf "src/${FOLDER}-vfs_fruit-nfs_aces.patch" "target/${FOLDER}/"
+cp -vf "src/${FOLDER}-FILE_OFFSET_BITS.patch" "target/${FOLDER}/"
 pushd "target/${FOLDER}"
 patch -p1 -i "${FOLDER}-smbstatus-static-link.patch"
 patch -p1 -i "${FOLDER}-bug-11466-attach-11499.patch"
 patch -p1 -i "${FOLDER}-bug-11347.patch"
+patch -p1 -i "${FOLDER}-vfs_fruit-nfs_aces.patch"
+patch -p1 -i "${FOLDER}-FILE_OFFSET_BITS.patch"
 
 LDFLAGS="${LDFLAGS} -lheimntlm -lgssapi -lkrb5 -lheimbase -lhx509 -lhcrypto -lasn1 -lwind -lroken -lcom_err -lsqlite3 -ledit -lncurses -lpopt -lresolv -lcrypt -ldl"
 PATH="${DEPS}/bin:${PATH}" \
@@ -248,12 +253,14 @@ PATH="${DEPS}/bin:${PATH}" \
   --without-libarchive --without-pam --without-pam_smbpass \
   --without-systemd --without-winbind \
   --nopyc --nopyo \
-  --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
-  --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,NONE \
+  --bundled-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,util,NONE \
+  --builtin-libraries=tdb,ldb,ntdb,talloc,tevent,pytalloc-util,pyldb-util,nss_wrapper,socket_wrapper,uid_wrapper,subunit,replace,util,NONE \
   --with-static-modules=vfs_recycle,vfs_catia,vfs_fruit,vfs_streams_depot,vfs_streams_xattr \
   --nonshared-binary=ALL
-DESTDIR="${DEST}" ./buildtools/bin/waf build install --jobs=4 --prefix="/" \
+
+DESTDIR="${DEST}" ./buildtools/bin/waf build install -vv --jobs=4 --prefix="/" \
   --targets=smbd/smbd,nmbd/nmbd,smbpasswd,pdbedit,smbstatus,smbtorture,client/smbclient,nmblookup
+
 "${STRIP}" -s -R .comment -R .note -R .note.ABI-tag \
   "${DEST}/sbin/smbd" "${DEST}/sbin/nmbd" \
   "${DEST}/bin/smbpasswd" "${DEST}/bin/pdbedit" "${DEST}/bin/smbclient" "${DEST}/bin/nmblookup"
@@ -265,9 +272,6 @@ _build_rootfs() {
 # /sbin/nmbd
 # /usr/bin/pdbedit
 # /usr/bin/smbpasswd
-# /lib/libattr.so
-# /lib/libattr.so.1
-# /lib/libattr.so.1.1.0
 # /bin/getfattr
 # /bin/setfattr
   return 0

@@ -1,0 +1,68 @@
+diff -ru a/lib/tdb/tools/tdbrestore.c b/lib/tdb/tools/tdbrestore.c
+--- a/lib/tdb/tools/tdbrestore.c	2014-10-01 01:12:21.000000000 -0700
++++ b/lib/tdb/tools/tdbrestore.c	2016-01-28 02:25:08.776341344 -0800
+@@ -17,8 +17,8 @@
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#include <assert.h>
+ #include "replace.h"
++#include <assert.h>
+ #include "system/locale.h"
+ #include "system/time.h"
+ #include "system/filesys.h"
+diff -ru a/lib/util/debug.c b/lib/util/debug.c
+--- a/lib/util/debug.c	2015-03-04 11:53:46.000000000 -0800
++++ b/lib/util/debug.c	2016-01-28 02:25:43.675903595 -0800
+@@ -19,8 +19,8 @@
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#include <talloc.h>
+ #include "replace.h"
++#include <talloc.h>
+ #include "system/filesys.h"
+ #include "system/syslog.h"
+ #include "system/locale.h"
+diff -ru a/lib/util/idtree.c b/lib/util/idtree.c
+--- a/lib/util/idtree.c	2014-10-01 02:06:01.000000000 -0700
++++ b/lib/util/idtree.c	2016-01-28 02:25:57.451730984 -0800
+@@ -32,8 +32,8 @@
+  * @file
+  */
+ 
+-#include <talloc.h>
+ #include "replace.h"
++#include <talloc.h>
+ #include "debug.h"
+ #include "idtree.h"
+ 
+diff -ru a/lib/util/util.c b/lib/util/util.c
+--- a/lib/util/util.c	2015-12-08 01:15:39.000000000 -0800
++++ b/lib/util/util.c	2016-01-28 02:24:45.900630376 -0800
+@@ -22,8 +22,8 @@
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#include <talloc.h>
+ #include "replace.h"
++#include <talloc.h>
+ #include "system/network.h"
+ #include "system/filesys.h"
+ #include "system/locale.h"
+diff -ru a/source4/torture/local/verif_trailer.c b/source4/torture/local/verif_trailer.c
+--- a/source4/torture/local/verif_trailer.c	2014-10-01 01:12:22.000000000 -0700
++++ b/source4/torture/local/verif_trailer.c	2016-01-28 02:28:21.001921135 -0800
+@@ -19,11 +19,9 @@
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#include <sys/types.h>
+-#include <sys/stat.h>
++#include "includes.h"
+ #include <unistd.h>
+ 
+-#include "includes.h"
+ #include "librpc/gen_ndr/security.h"
+ #include "lib/param/param.h"
+ #include "lib/util/dlinklist.h"
