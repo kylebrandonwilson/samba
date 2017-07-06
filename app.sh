@@ -4,7 +4,7 @@ LDFLAGS="-L${DEST}/lib -L${DEPS}/lib -Wl,--gc-sections"
 
 ### ZLIB ###
 _build_zlib() {
-local VERSION="1.2.8"
+local VERSION="1.2.11"
 local FOLDER="zlib-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="http://zlib.net/${FILE}"
