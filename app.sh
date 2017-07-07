@@ -18,20 +18,6 @@ rm -vf "${DEPS}/lib/libz.so"*
 popd
 }
 
-### LIBAIO ###
-_build_libaio() {
-local VERSION="0.3.110-1"
-local FOLDER="libaio-${VERSION}"
-local FILE="${FOLDER}.tar.gz"
-local URL="https://git.fedorahosted.org/cgit/libaio.git/snapshot/${FILE}"
-
-_download_tgz "${FILE}" "${URL}" "${FOLDER}"
-pushd "target/${FOLDER}"
-make prefix="${DEPS}" install
-rm -vf "${DEPS}/lib/libaio.so" "${DEPS}/lib/libaio.so.1" "${DEPS}/lib/libaio.so.1.0.1"
-popd
-}
-
 ### LIBPOPT ###
 _build_libpopt() {
 local VERSION="1.16"
@@ -247,7 +233,7 @@ PATH="${DEPS}/bin:${PATH}" \
   DESTDIR="${DEST}" \
   ./buildtools/bin/waf configure --jobs=4 --prefix="/" \
   --cross-compile --cross-execute="qemu-arm-static" --hostcc="gcc" \
-  --enable-pthreadpool --with-aio-support \
+  --enable-pthreadpool \
   --disable-cups --disable-iprint \
   --without-acl-support --without-ad-dc --without-ads --without-ldap \
   --without-libarchive --without-pam --without-pam_smbpass \
@@ -279,7 +265,6 @@ _build_rootfs() {
 
 _build() {
   _build_zlib
-  _build_libaio
   _build_libpopt
   _build_ncurses
   _build_libedit
