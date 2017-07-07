@@ -65,7 +65,7 @@ popd
 
 ### SQLITE ###
 _build_sqlite() {
-local VERSION="3100200"
+local VERSION="3190300"
 local FOLDER="sqlite-autoconf-${VERSION}"
 local FILE="${FOLDER}.tar.gz"
 local URL="http://sqlite.org/$(date +%Y)/${FILE}"
